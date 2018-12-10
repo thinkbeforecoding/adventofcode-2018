@@ -50,3 +50,26 @@ seq {
         for i in 0s..1000s -> overlap i j
 } |> Seq.sum
 
+let bitmap = [|
+    for j in 0s..999s do
+        for i in 0s..999s -> overlap i j |> byte
+|]
+
+let rec intersectLoop rect x y  =
+    printfn "%d,%d" x y
+    if x = rect.right then
+        if y = rect.bottom then
+            true
+        else
+            intersectLoop rect rect.left (y + 1s)
+    else
+        if bitmap.[int y * 1000 + int x] <> 0uy then
+            false
+        else
+            intersectLoop rect (x + 1s) y
+
+let intersect rect =
+    intersectLoop rect rect.left rect.top
+
+intersect items.[0]
+items |> Array.mapi (fun i r -> i + 1, r) |> Array.filter (fun (i,r) -> try intersect r with ex -> printfn "%d" i; false) //(snd >> intersect)
