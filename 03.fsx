@@ -56,7 +56,6 @@ let bitmap = [|
 |]
 
 let rec intersectLoop rect x y  =
-    printfn "%d,%d" x y
     if x = rect.right then
         if y = rect.bottom then
             true
@@ -72,4 +71,4 @@ let intersect rect =
     intersectLoop rect rect.left rect.top
 
 intersect items.[0]
-items |> Array.mapi (fun i r -> i + 1, r) |> Array.filter (fun (i,r) -> try intersect r with ex -> printfn "%d" i; false) //(snd >> intersect)
+items |> Array.mapi (fun i r -> i + 1, r) |> Array.filter (snd >> intersect)
