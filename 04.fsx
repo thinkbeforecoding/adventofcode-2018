@@ -124,9 +124,9 @@ let minute sleeper =
     |> List.map toSeries
     |> List.fold (map2 (+)) empty 
     |> function (Series(_, l)) -> 
-        match l with
-        | [] -> DateTime.MinValue, 0
-        | _ -> List.maxBy snd l
+                    match l with
+                    | [] -> DateTime.MinValue, 0
+                    | _ -> List.maxBy snd l
     |> fun (d, n) -> d.Minute, n
 
 let (Guard g) = sleeper in
@@ -143,6 +143,9 @@ let guards =
 
 guards
 |> List.map (fun g -> g, minute g)
+|> List.maxBy (snd >> snd)
+|> function (Guard g, (m,c)) -> g * m
+
 minute (Guard 3203)
 
 items
