@@ -83,4 +83,67 @@ let sleeper =
     |> List.sortBy snd
     |> List.last |> fst
 
-items |> List.filter (fun x -> guard x = sleeper)
+
+type Series<'a> =
+    | Series of 'a * (DateTime * 'a) list 
+
+let map2 f (Series(sx, nx)) (Series(sy,ny)) =
+    let rec loop sx sy nx ny result =
+        match nx, ny with
+        | [], [] -> List.rev result
+        | [], (d,hy) :: ty -> loop sx hy nx ty ((d, f sx hy) :: result)
+        | (d,hx) :: tx, [] -> loop hx sy tx ny ((d, f hx sy) :: result)
+        | (dx,hx) :: tx, (dy,hy) :: ty ->
+            if dx = dy then
+                loop hx hy tx ty ((dx, f hx hy) :: result)
+            elif dx < dy then
+                loop hx sy tx ny ((dx, f hx sy) :: result)
+            else
+                loop sx hy nx ty ((dy, f sx hy) :: result)
+
+    Series(f sx sy, loop sx sy nx ny [])
+
+let time (d:DateTime)=
+    DateTime(1,1,1,d.Hour, d.Minute, 0)
+
+
+let toSeries = function
+    | { date = d; state = New _ } :: tail -> 
+        Series(0,
+            tail |> List.map (function
+                | {date = d; state = Asleep} -> time d,1
+                | { date = d } -> time d,0)
+        )
+    | _ -> failwith "invalid"
+
+let empty = Series(0,[])
+
+let minute sleeper =
+    items 
+    |> List.filter (fun x -> guard x = sleeper)
+    |> List.map toSeries
+    |> List.fold (map2 (+)) empty 
+    |> function (Series(_, l)) -> 
+        match l with
+        | [] -> DateTime.MinValue, 0
+        | _ -> List.maxBy snd l
+    |> fun (d, n) -> d.Minute, n
+
+let (Guard g) = sleeper in
+let (m,n) = minute sleeper in
+m * g
+
+
+// part II ---------------
+
+let guards =
+    items
+    |> List.map guard
+    |> List.distinct
+
+guards
+|> List.map (fun g -> g, minute g)
+minute (Guard 3203)
+
+items
+|> List.filter (fun l -> guard l = (Guard 3203))
